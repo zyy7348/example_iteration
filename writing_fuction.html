@@ -216,6 +216,49 @@ beta1_hat = coef(ls_fit)[2]</code></pre>
   )
 }</code></pre>
 </div>
+<div id="lotr-data" class="section level2">
+<h2>LoTR data</h2>
+<pre class="r"><code>library(readxl)
+library(janitor)
+
+lotr_function = function(path, cell_range, movie_name) {
+  df = read_excel(path = &quot;./data/LotR_Words.xlsx&quot;, range = cell_range) %&gt;%
+  clean_names() %&gt;%
+  gather(key = sex, value = words, female:male) %&gt;%
+  mutate(race = tolower(race),
+         movie = movie_name)
+  
+  df
+}
+
+
+bind_rows(lotr_function(cell_range = &quot;B3:D6&quot;, movie_name = &quot;Fellowship&quot;),
+
+lotr_function(cell_range = &quot;F3:H6&quot;, movie_name = &quot;Two Towers&quot;),
+
+lotr_function(cell_range = &quot;J3:L6&quot;, movie_name = &quot;Return&quot;))</code></pre>
+<pre><code>## # A tibble: 18 x 4
+##      race    sex words      movie
+##     &lt;chr&gt;  &lt;chr&gt; &lt;dbl&gt;      &lt;chr&gt;
+##  1    elf female  1229 Fellowship
+##  2 hobbit female    14 Fellowship
+##  3    man female     0 Fellowship
+##  4    elf   male   971 Fellowship
+##  5 hobbit   male  3644 Fellowship
+##  6    man   male  1995 Fellowship
+##  7    elf female   331 Two Towers
+##  8 hobbit female     0 Two Towers
+##  9    man female   401 Two Towers
+## 10    elf   male   513 Two Towers
+## 11 hobbit   male  2463 Two Towers
+## 12    man   male  3589 Two Towers
+## 13    elf female   183     Return
+## 14 hobbit female     2     Return
+## 15    man female   268     Return
+## 16    elf   male   510     Return
+## 17 hobbit   male  2673     Return
+## 18    man   male  2459     Return</code></pre>
+</div>
 
 
 

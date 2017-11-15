@@ -222,8 +222,75 @@ $(document).ready(function () {
 ## (Intercept)         tmin  
 ##       6.851        1.245</code></pre>
 </div>
-<div id="section" class="section level2">
-<h2></h2>
+<div id="operation-on-list-columns" class="section level2">
+<h2>Operation on list columns</h2>
+<p>write a function to fit tmax vs tmin for a given dataframe.</p>
+<pre class="r"><code>weather_lm = function(df) {
+  lm(tmax ~ tmin, data = df)
+}</code></pre>
+<p>make sure this works …</p>
+<pre class="r"><code>weather_lm(weather_nest$data[[1]]) %&gt;% broom::tidy()</code></pre>
+<pre><code>##          term estimate  std.error statistic       p.value
+## 1 (Intercept) 7.779171 0.22116552  35.17352 3.883698e-119
+## 2        tmin 1.044830 0.01638279  63.77608 1.229687e-199</code></pre>
+<p>can we loop or use a loop function …</p>
+<p>YES</p>
+<pre class="r"><code>map(weather_nest$data, weather_lm)</code></pre>
+<pre><code>## [[1]]
+## 
+## Call:
+## lm(formula = tmax ~ tmin, data = df)
+## 
+## Coefficients:
+## (Intercept)         tmin  
+##       7.779        1.045  
+## 
+## 
+## [[2]]
+## 
+## Call:
+## lm(formula = tmax ~ tmin, data = df)
+## 
+## Coefficients:
+## (Intercept)         tmin  
+##      22.489        0.326  
+## 
+## 
+## [[3]]
+## 
+## Call:
+## lm(formula = tmax ~ tmin, data = df)
+## 
+## Coefficients:
+## (Intercept)         tmin  
+##       6.851        1.245</code></pre>
+<p>Fit some models, and tidy the output</p>
+<pre class="r"><code>weather_nest %&gt;% 
+  mutate(models = map(data, weather_lm),
+         results = map(models, broom::tidy)) </code></pre>
+<pre><code>## # A tibble: 3 x 5
+##             name          id               data   models
+##            &lt;chr&gt;       &lt;chr&gt;             &lt;list&gt;   &lt;list&gt;
+## 1 CentralPark_NY USW00094728 &lt;tibble [366 x 4]&gt; &lt;S3: lm&gt;
+## 2     Waikiki_HA USC00519397 &lt;tibble [366 x 4]&gt; &lt;S3: lm&gt;
+## 3   Waterhole_WA USS0023B17S &lt;tibble [366 x 4]&gt; &lt;S3: lm&gt;
+## # ... with 1 more variables: results &lt;list&gt;</code></pre>
+<p>Add an unnest to see results</p>
+<pre class="r"><code>weather_nest %&gt;% 
+  mutate(models = map(data, weather_lm),
+         results = map(models, broom::tidy)) %&gt;%
+  select(-data, -models) %&gt;%
+  unnest()</code></pre>
+<pre><code>## # A tibble: 6 x 7
+##             name          id        term   estimate  std.error statistic
+##            &lt;chr&gt;       &lt;chr&gt;       &lt;chr&gt;      &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;
+## 1 CentralPark_NY USW00094728 (Intercept)  7.7791711 0.22116552  35.17352
+## 2 CentralPark_NY USW00094728        tmin  1.0448303 0.01638279  63.77608
+## 3     Waikiki_HA USC00519397 (Intercept) 22.4887437 0.54052668  41.60524
+## 4     Waikiki_HA USC00519397        tmin  0.3259609 0.02477356  13.15761
+## 5   Waterhole_WA USS0023B17S (Intercept)  6.8507057 0.14323379  47.82884
+## 6   Waterhole_WA USS0023B17S        tmin  1.2448124 0.02864309  43.45942
+## # ... with 1 more variables: p.value &lt;dbl&gt;</code></pre>
 </div>
 
 

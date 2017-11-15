@@ -94,10 +94,41 @@ weather_nest %>%
   unnest()
 ```
 
+## instacart data
 
+```{r}
+instacart = read_csv("./data/instacart_train_data.csv.zip")
 
+instacart_nest = instacart %>% 
+  group_by(department) %>% 
+  nest() %>% 
+  filter(department %in% c("deli", "produce", "snacks", "beverages"))
 
+instacart_nest  
 
+```
+
+Let's try to summarize `order_hour_of_day`
+
+```{r}
+summary(instacart_nest$data[[1]]$order_hour_of_day)
+```
+
+do this using map
+
+```{r}
+instacart_nest %>% 
+  mutate(summary = map(data, ~summary(.x[["order_hour_of_day"]])),
+         results = map(summary, broom::tidy)) %>% 
+  select(-data, -summary) %>% 
+  unnest()
+```
+
+### Bootstrapping
+
+```{r}
+
+```
 
 
 

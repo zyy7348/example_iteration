@@ -292,6 +292,61 @@ $(document).ready(function () {
 ## 6   Waterhole_WA USS0023B17S        tmin  1.2448124 0.02864309  43.45942
 ## # ... with 1 more variables: p.value &lt;dbl&gt;</code></pre>
 </div>
+<div id="instacart-data" class="section level2">
+<h2>instacart data</h2>
+<pre class="r"><code>instacart = read_csv(&quot;./data/instacart_train_data.csv.zip&quot;)</code></pre>
+<pre><code>## Parsed with column specification:
+## cols(
+##   order_id = col_integer(),
+##   product_id = col_integer(),
+##   add_to_cart_order = col_integer(),
+##   reordered = col_integer(),
+##   user_id = col_integer(),
+##   eval_set = col_character(),
+##   order_number = col_integer(),
+##   order_dow = col_integer(),
+##   order_hour_of_day = col_integer(),
+##   days_since_prior_order = col_integer(),
+##   product_name = col_character(),
+##   aisle_id = col_integer(),
+##   department_id = col_integer(),
+##   aisle = col_character(),
+##   department = col_character()
+## )</code></pre>
+<pre class="r"><code>instacart_nest = instacart %&gt;% 
+  group_by(department) %&gt;% 
+  nest() %&gt;% 
+  filter(department %in% c(&quot;deli&quot;, &quot;produce&quot;, &quot;snacks&quot;, &quot;beverages&quot;))
+
+instacart_nest  </code></pre>
+<pre><code>## # A tibble: 4 x 2
+##   department                    data
+##        &lt;chr&gt;                  &lt;list&gt;
+## 1    produce &lt;tibble [409,087 x 14]&gt;
+## 2  beverages &lt;tibble [114,046 x 14]&gt;
+## 3       deli  &lt;tibble [44,291 x 14]&gt;
+## 4     snacks &lt;tibble [118,862 x 14]&gt;</code></pre>
+<p>Let’s try to summarize <code>order_hour_of_day</code></p>
+<pre class="r"><code>summary(instacart_nest$data[[1]]$order_hour_of_day)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    0.00   10.00   14.00   13.56   16.00   23.00</code></pre>
+<p>do this using map</p>
+<pre class="r"><code>instacart_nest %&gt;% 
+  mutate(summary = map(data, ~summary(.x[[&quot;order_hour_of_day&quot;]])),
+         results = map(summary, broom::tidy)) %&gt;% 
+  select(-data, -summary) %&gt;% 
+  unnest()</code></pre>
+<pre><code>## # A tibble: 4 x 7
+##   department minimum    q1 median     mean    q3 maximum
+##        &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
+## 1    produce       0    10     14 13.55972    16      23
+## 2  beverages       0    10     13 13.48292    16      23
+## 3       deli       0    11     14 13.61703    17      23
+## 4     snacks       0    10     14 13.54126    16      23</code></pre>
+<div id="bootstrapping" class="section level3">
+<h3>Bootstrapping</h3>
+</div>
+</div>
 
 
 

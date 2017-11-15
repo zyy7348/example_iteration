@@ -8,6 +8,8 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(readxl)
+library(janitor)
 ```
 
 ## simple fuction
@@ -133,8 +135,6 @@ sim_regression = function(n, beta0, beta1) {
 ## LoTR data
 
 ```{r}
-library(readxl)
-library(janitor)
 
 lotr_function = function(path, cell_range, movie_name) {
   df = read_excel(path = "./data/LotR_Words.xlsx", range = cell_range) %>%
@@ -155,6 +155,13 @@ lotr_function(cell_range = "J3:L6", movie_name = "Return"))
 
 
 ```
+
+```{r}
+
+```
+
+
+
 
 
 

@@ -1,0 +1,278 @@
+---
+title: "Iteration and stimulation"
+author: "Yeyi Zhang"
+date: "11/13/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(forcats)
+library(stringr)
+library(rvest)
+library(stringr)
+
+theme_set(theme_bw())
+theme_update(legend.position = "bottom")
+
+set.seed(1)
+
+```
+
+## Iteration
+```{r}
+
+df = data_frame(
+  a = rnorm(20),
+  b = rnorm(20),
+  c = rnorm(20),
+  d = rnorm(20)
+)
+
+```
+
+```{r}
+z_score = function(x) {
+  
+  z = mean(x) / sd(x)
+  z
+  
+}
+```
+
+
+```{r}
+z_score(df[[1]])
+z_score(df[[2]])
+z_score(df[[3]])
+z_score(df[[4]])
+```
+
+write a for loop!!!
+```{r}
+output = vector("list", length = 4)
+
+for (i in 1:4) {
+  
+  output[[i]] = z_score(df[[i]])
+  
+  
+  
+}
+
+output
+```
+
+### map instead of for
+
+```{r}
+output = map(df, z_score)
+```
+
+### map variants
+
+```{r}
+output = map_dbl(df, z_score)
+```
+
+```{r}
+z_score = function(x) {
+  
+  if (!is.numeric(x)) {
+    stop("argument x should be numeric")
+  } else if (length(x) == 1) {
+    stop("z-scores cannot be computed for length 1 vectors")
+  }
+  
+  mean_x = mean(x)
+  sd_x = sd(x)
+  z = mean_x / sd_x
+  
+  data_frame(
+    mean = mean_x, 
+    sd = sd_x,
+    z = z
+  )
+}
+```
+
+
+
+```{r}
+z_score(df[[1]])
+
+map_df(df, z_score)
+```
+
+scarpe a lot of urls
+
+```{r}
+read_page_reviews <- function(url) {
+  
+  h = read_html(url)
+  
+  title = h %>%
+    html_nodes("#cm_cr-review_list .review-title") %>%
+    html_text()
+  
+  stars = h %>%
+    html_nodes("#cm_cr-review_list .review-rating") %>%
+    html_text() %>%
+    str_extract("\\d") %>%
+    as.numeric()
+  
+  text = h %>%
+    html_nodes(".review-data:nth-child(4)") %>%
+    html_text()
+  
+  data_frame(title, stars, text)
+}
+```
+
+
+```{r}
+url_base = "https://www.amazon.com/product-reviews/B00005JNBQ/ref=cm_cr_arp_d_viewopt_rvwer?ie=UTF8&reviewerType=avp_only_reviews&sortBy=recent&pageNumber="
+urls = str_c(url_base, 1:10)
+
+##  read_page_reviews(urls[[1]]) don't do
+
+output = vector("list", 10)
+
+for (i in 1:10) {
+  
+  output[[i]] = read_page_reviews(urls[[i]])
+}
+```
+
+Using a map statement
+
+```{r}
+output = map(urls, read_page_reviews)
+```
+
+## map variants
+```{r}
+
+```
+
+
+
+### Stimulation
+
+
+
+```{r}
+sim_regression = function(n, beta0, beta1) {
+  
+  sim_data = tibble(
+    x = rnorm(n, mean = 1, sd = 1),
+    y = beta0 + beta1 * x + rnorm(n, 0, 1)
+  )
+  
+  ls_fit = lm(y ~ x, data = sim_data)
+  
+  tibble(
+    n = n,
+    beta0_hat = coef(ls_fit)[1],
+    beta1_hat = coef(ls_fit)[2]
+  )
+}
+```
+
+
+```{r}
+sim_regression(30, 2, 3)
+```
+
+
+Use a for loop ...
+
+
+```{r}
+output = vector("list", length = 100)
+
+for (i in 1:100) {
+  
+  output[[i]] = sim_regression(30, 2, 3)
+}
+
+sim_results = bind_rows(output)
+```
+
+rerun is the same as the code above(foor loop)
+
+```{r}
+sim_results = rerun(100, sim_regression(30, 2, 3)) %>% 
+  bind_rows()
+```
+
+clear as mud!
+
+```{r}
+sim_results %>% 
+  ggplot(aes(x = beta0_hat)) + geom_density()
+
+sim_results %>% 
+  gather(key = parameter, value = estimate, beta0_hat:beta1_hat) %>% 
+  group_by(parameter) %>% 
+  summarize(emp_mean = mean(estimate),
+            emp_var = var(estimate)) %>% 
+  knitr::kable(digits = 3)
+```
+
+### many n's
+
+what if i have alot of n values?
+
+```{r}
+n_samp = list(30, 60, 120, 240)
+output = vector("list", length = 4)
+
+for (i in 1:4) {
+  output[[i]] = rerun(100, sim_regression(n_samp[[i]], 2, 3)) %>% 
+    bind_rows
+}
+```
+
+replace for with a map
+
+```{r}
+simulate_n = function(n_rep, n_samp, beta0, beta1) {
+  
+  rerun(n_rep, sim_regression(n_samp, beta0, beta1)) %>% 
+    bind_rows()
+  
+}
+
+sim_results = 
+  map_df(n_samp, simulate_n,
+         n_rep = 1000, beta0 = 2, beta1 = 3) 
+```
+
+```{r}
+relabel_function = function(n) { str_c("n = ", n) }
+
+sim_results %>% 
+  mutate(n = as.factor(n),
+         n = fct_relabel(n, relabel_function)) %>% 
+  ggplot(aes(x = n, y = beta1_hat, fill = n)) + 
+  geom_violin()
+```
+
+```{r}
+sim_results %>% 
+  mutate(n = as.factor(n),
+         n = fct_relabel(n, relabel_function)) %>% 
+  ggplot(aes(x = beta0_hat, y = beta1_hat)) + 
+  geom_point(alpha = .2) + 
+  facet_grid(~n)
+```
+
+
+
+
+
+
+

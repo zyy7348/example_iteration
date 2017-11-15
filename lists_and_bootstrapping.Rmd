@@ -1,0 +1,53 @@
+---
+title: "Lists and bootstrapping.Rmd"
+author: "Yeyi Zhang"
+date: "11/15/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(rnoaa)
+```
+
+## R Markdown
+```{r}
+
+weather = 
+  meteo_pull_monitors(c("USW00094728", "USC00519397", "USS0023B17S"),
+                      var = c("PRCP", "TMIN", "TMAX"), 
+                      date_min = "2016-01-01",
+                      date_max = "2016-12-31") %>%
+  mutate(
+    name = recode(id, USW00094728 = "CentralPark_NY", 
+                      USC00519397 = "Waikiki_HA",
+                      USS0023B17S = "Waterhole_WA"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) %>%
+  select(name, id, everything())
+```
+
+
+```{r}
+weather_nest = 
+  weather %>% 
+  nest(date:tmin)
+```
+
+
+
+```{r}
+weather_nest
+
+weather_nest$data
+```
+
+```{r}
+weather_nest$data[[1]]
+
+lm(tmax ~ tmin, data = weather_nest$data[[3]])
+```
+
+
+## 
